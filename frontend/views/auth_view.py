@@ -1,58 +1,56 @@
 import streamlit as st
 import requests
+
 def show_auth_page():
-    st.title("Chào mừng đến với EnglishMate 🚀")
+    """Render the authentication page (Login/Signup).
 
-    tab_login, tab_signup = st.tabs(["Đăng nhập", "Đăng ký"])
+    Displays a tabbed interface allowing users to either log in to an existing 
+    account or register a new one. Handles form submission, API requests to the 
+    backend, and updates the session state upon successful authentication. 
+    Also includes a Google Sign-In option if configured.
+    """
+    st.title("Welcome to EnglishMate")
+
+    tab_login, tab_signup = st.tabs(["Login", "Sign Up"])
     
-    # Tạo 2 tab trên giao diện
-
-    # --- GIAO DIỆN ĐĂNG KÝ ---
+    # --- SIGN UP UI ---
     with tab_signup:
-        st.subheader("Tạo tài khoản mới")
+        st.subheader("Create a new account")
         
-        # Tạo một Form để người dùng nhập liệu
         with st.form("signup_form"):
-            new_email = st.text_input("Email của bạn")
-            new_password = st.text_input("Mật khẩu", type="password")
-            submit_btn = st.form_submit_button("Đăng ký ngay")
+            new_email = st.text_input("Your Email")
+            new_password = st.text_input("Password", type="password")
+            submit_btn = st.form_submit_button("Sign Up Now")
             
             if submit_btn:
-                # Người dùng vừa bấm nút! Gói hàng (data) lại để gửi đi:
                 payload = {
                     "email": new_email,
                     "password": new_password
                 }
                 
-                # CHỖ TRỐNG 1: Điền URL API đăng ký của Backend (nhớ lại bài test Swagger UI lúc nãy)
-                # Gợi ý: URL kết thúc bằng /auth/register
                 api_url = "http://127.0.0.1:8000/auth/register"  
                 
                 try:
-                    # CHỖ TRỐNG 2: Dùng thư viện requests để gửi gói hàng bằng phương thức POST
-                    # Gợi ý: requests.post(url, json=gói_hàng)
                     response = requests.post(api_url, json=payload)
                     
-                    # CHỖ TRỐNG 3: Kiểm tra xem server có trả về mã 200 (Thành công) hay không?
                     if response.status_code == 200:  
-                        st.success("Tạo tài khoản thành công! Hãy chuyển sang tab Đăng nhập.")
+                        st.success("Account created successfully! Please switch to the Login tab.")
                     else:
-                        # Nếu lỗi (ví dụ 400), lấy chi tiết lỗi từ server in ra màn hình
-                        error_msg = response.json().get("detail", "Lỗi không xác định")
-                        st.error(f"Đăng ký thất bại: {error_msg}")
+                        error_msg = response.json().get("detail", "Unknown error")
+                        st.error(f"Registration failed: {error_msg}")
                         
                 except requests.exceptions.ConnectionError:
-                    st.error("Không thể kết nối đến máy chủ Backend. Bạn đã chạy uvicorn chưa?")
+                    st.error("Cannot connect to the backend server. Is uvicorn running?")
 
 
-    # --- GIAO DIỆN ĐĂNG NHẬP ---
+    # --- LOGIN UI ---
     with tab_login:
-        st.subheader("Đăng nhập")
+        st.subheader("Login")
         
         with st.form("login_form"):
             login_email = st.text_input("Email")
-            login_password = st.text_input("Mật khẩu", type="password")
-            login_btn = st.form_submit_button("Đăng nhập")
+            login_password = st.text_input("Password", type="password")
+            login_btn = st.form_submit_button("Login")
             
             if login_btn:
                 payload = {
@@ -60,35 +58,31 @@ def show_auth_page():
                     "password": login_password
                 }
                 
-                # CHỖ TRỐNG 1: Điền URL API đăng nhập
                 api_url = "http://127.0.0.1:8000/auth/login" 
                 
                 try:
-                    # CHỖ TRỐNG 2: Gửi request POST
                     response = requests.post(api_url, json=payload)  
                     
                     if response.status_code == 200:
-                        # Lấy dữ liệu server trả về (có chứa user_id)
                         data = response.json()
                         
-                        # CẤT VÀO TÚI THẦN KỲ (Session State)
+                        # Store credentials in Session State
                         st.session_state["logged_in"] = True
                         st.session_state["user_id"] = data.get("user_id")
                         
-                        st.success("Đăng nhập thành công! 🎉")
-                        st.write(f"ID của bạn là: {st.session_state['user_id']}")
+                        st.success("Login successful!")
+                        st.write(f"Your ID is: {st.session_state['user_id']}")
                         st.rerun()
                     else:
-                        error_msg = response.json().get("detail", "Lỗi không xác định")
-                        st.error(f"Đăng nhập thất bại: {error_msg}")
+                        error_msg = response.json().get("detail", "Unknown error")
+                        st.error(f"Login failed: {error_msg}")
                         
                 except requests.exceptions.ConnectionError:
-                    st.error("Không thể kết nối đến máy chủ Backend.")
-        # ⚠️ QUAN TRỌNG: Bạn hãy copy TOÀN BỘ phần code tab_login và tab_signup 
-        # của bạn lúc nãy dán vào đây. 
-        # MẸO: Nhớ bôi đen toàn bộ code cũ rồi ấn phím `Tab` một cái để thụt nó lùi vào trong khối `else:` nhé!
+                    st.error("Cannot connect to the backend server.")
 
         st.write("---")
+        
+        # --- GOOGLE LOGIN ---
         try:
             google_cfg = st.secrets["google-login"]
             google_login_url = google_cfg.get("google-url", "")
@@ -107,12 +101,12 @@ def show_auth_page():
                         text-align: center;
                         width: 100%;
                     ">
-                        🌐 Đăng nhập với Google
+                        Login with Google
                     </a>
                     """,
                     unsafe_allow_html=True
                 )
         except Exception:
-            st.info("💡 Chưa cấu hình Google Login. Vui lòng thêm vào `.streamlit/secrets.toml` để sử dụng tính năng này.")
+            st.info("Google Login is not configured. Please add credentials to `.streamlit/secrets.toml` to enable this feature.")
 
     

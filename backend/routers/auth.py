@@ -11,6 +11,17 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register")
 def api_register(mess : SignupRequest):
+    """Register a new user with email and password.
+
+    Args:
+        mess (SignupRequest): The user's registration details containing email and password.
+
+    Returns:
+        dict: A success message and the created user ID.
+
+    Raises:
+        HTTPException: If registration fails due to invalid data or an existing user.
+    """
     user = auth_register(mess.email, mess.password)
 
     if isinstance(user, str):
@@ -19,6 +30,17 @@ def api_register(mess : SignupRequest):
 
 @router.post("/login")
 def api_login(mess : LoginRequest):
+    """Authenticate a user using email and password.
+
+    Args:
+        mess (LoginRequest): The user's login credentials.
+
+    Returns:
+        dict: A success message and the user's local ID.
+
+    Raises:
+        HTTPException: If authentication fails due to incorrect credentials.
+    """
     user = auth_login(mess.email, mess.password)
 
     if isinstance(user, str):
@@ -34,11 +56,22 @@ try:
     FRONTEND_URL = google_cfg["frontend_url"]
     COOKIE_SECURE = google_cfg["cookie_secure"]
 except Exception:
-    # Tránh lỗi sập server nếu chưa config
+    # Prevent server crash if Google login is not configured
     GOOGLE_CLIENT_ID = None
 
 @router.post("/google")
 def api_google_login(payload: GoogleLoginRequest):
+    """Verify a Google ID token and log the user in via Firebase.
+
+    Args:
+        payload (GoogleLoginRequest): The request containing the Google id_token.
+
+    Returns:
+        dict: A success message and the user's local ID.
+
+    Raises:
+        HTTPException: If the token is invalid or authentication fails.
+    """
     user = auth_google_login(payload.id_token)
     if isinstance(user, str):
         raise HTTPException(status_code=401, detail=f"Google token invalid: {user}")
@@ -46,6 +79,17 @@ def api_google_login(payload: GoogleLoginRequest):
 
 @router.get("/google/start")
 def google_start():
+    """Initiate the Google OAuth 2.0 login flow.
+
+    Redirects the user to the Google OAuth consent screen. It also sets a secure 
+    cookie with a random state parameter to prevent CSRF attacks.
+
+    Returns:
+        RedirectResponse: Redirects to Google's authentication URL.
+
+    Raises:
+        HTTPException: If Google Login is not properly configured in the server.
+    """
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=400, detail="Chưa cấu hình Google Login")
         
@@ -85,6 +129,24 @@ def google_callback(
     state: str | None = None,
     error: str | None = None,
 ):
+    """Handle the callback from Google OAuth 2.0.
+
+    Exchanges the authorization code for an ID token, authenticates with Firebase 
+    using the Google token, and redirects the user back to the frontend with the 
+    Firebase token.
+
+    Args:
+        request (Request): The incoming FastAPI request.
+        code (str | None): The authorization code returned by Google.
+        state (str | None): The state parameter returned by Google.
+        error (str | None): Any error message returned by Google.
+
+    Returns:
+        RedirectResponse: Redirects to the frontend URL with the id_token as a query parameter.
+
+    Raises:
+        HTTPException: If the OAuth flow fails, the state is invalid, or the token exchange fails.
+    """
     if error:
         raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
 

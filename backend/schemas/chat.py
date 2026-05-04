@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class ChatMessage(BaseModel):
+    """Schema for a single chat message."""
     user_id: str
-    role: str       # Sẽ chứa chữ "user" hoặc "assistant"
-    content: str    # Nội dung tin nhắn
+    role: str       # "user" or "assistant"
+    content: str    # Message text content

@@ -2,13 +2,18 @@ import streamlit as st
 import requests
 
 def show_vocab_page():
-    st.title("📚 Kho Lưu Từ Vựng")
+    """Render the vocabulary management page.
+
+    Provides a form for users to add new vocabulary words and displays
+    a list of their saved words fetched from the backend.
+    """
+    st.title("Kho Lưu Từ Vựng")
     user_id = st.session_state.get("user_id")
 
-    # --- PHẦN 1: FORM THÊM TỪ MỚI ---
-    # st.expander giúp tạo một cái hộp có thể đóng/mở được cho gọn
-    with st.expander("➕ Thêm từ vựng mới", expanded=True):
-        # st.form giúp gom nhóm các ô nhập liệu lại, bấm nút mới gửi đi 1 thể
+    # --- PART 1: ADD NEW VOCABULARY FORM ---
+    # st.expander creates a collapsible container
+    with st.expander("Add New Vocabulary", expanded=True):
+        # st.form groups inputs together until submitted
         with st.form("add_vocab_form", clear_on_submit=True):
             col1, col2 = st.columns(2)
             with col1:
@@ -22,7 +27,7 @@ def show_vocab_page():
             
             if submit:
                 if word and meaning:
-                    # Gói hàng dữ liệu
+                    # Prepare data payload
                     payload = {
                         "user_id": user_id,
                         "word": word,
@@ -30,7 +35,7 @@ def show_vocab_page():
                         "example": example,
                         "status": "learning"
                     }
-                    # Bắn lên API Backend
+                    # Send request to Backend API
                     res = requests.post("http://127.0.0.1:8000/vocab/add", json=payload)
                     if res.status_code == 200:
                         st.success("Đã thêm từ vựng thành công! Tải lại trang để xem nhé.")
@@ -39,10 +44,10 @@ def show_vocab_page():
 
     st.divider()
 
-    # --- PHẦN 2: BẢNG DANH SÁCH TỪ VỰNG ---
-    st.subheader("📖 Danh sách từ đang học")
+    # --- PART 2: VOCABULARY LIST ---
+    st.subheader("Learning List")
     
-    # Hút dữ liệu từ API về
+    # Fetch data from API
     response = requests.get(f"http://127.0.0.1:8000/vocab/list/{user_id}")
     if response.status_code == 200:
         vocab_list = response.json().get("vocab_list", [])
@@ -50,13 +55,13 @@ def show_vocab_page():
         if len(vocab_list) == 0:
             st.info("Kho từ vựng đang trống. Hãy học chăm chỉ và lưu thêm từ nhé!")
         else:
-            # Vẽ từng từ vựng ra màn hình
+            # Render each vocabulary item
             for item in vocab_list:
-                with st.container(border=True): # Vẽ cái khung viền cho đẹp
+                with st.container(border=True): # Draw a neat border
                     colA, colB = st.columns([3, 1])
                     with colA:
                         st.markdown(f"**{item['word']}** : {item['meaning']}")
                         if item.get("example"):
                             st.caption(f"Ví dụ: *{item['example']}*")
                     with colB:
-                        st.button("Đang học 🔄", key=item["id"], disabled=True)
+                        st.button("Đang học", key=item["id"], disabled=True)

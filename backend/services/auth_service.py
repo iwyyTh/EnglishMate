@@ -3,6 +3,15 @@ from backend.schemas.auth import LoginRequest, SignupRequest
 from datetime import datetime
 
 def login(email, password):
+    """Authenticate a user using their email and password.
+
+    Args:
+        email (str): The user's email address.
+        password (str): The user's password.
+
+    Returns:
+        dict | str: The user data if successful, or an error string if failed.
+    """
     try:
         auth = get_auth_client()
         user = auth.sign_in_with_email_and_password(email, password)
@@ -11,6 +20,15 @@ def login(email, password):
         return str(e)
 
 def register(email, password):
+    """Register a new user and initialize their profile in Firestore.
+
+    Args:
+        email (str): The user's email address.
+        password (str): The user's chosen password.
+
+    Returns:
+        dict | str: The user data if successful, or an error string if failed.
+    """
     try:
         auth = get_auth_client()
         user = auth.create_user_with_email_and_password(email, password)
@@ -32,16 +50,24 @@ def register(email, password):
 from firebase_admin import auth as admin_auth
 
 def google_login(id_token):
+    """Verify Google token and create user in Firestore if not exists.
+
+    Args:
+        id_token (str): The Google ID token.
+
+    Returns:
+        dict | str: A dict with localId and email, or an error string if failed.
+    """
     try:
-        # Đảm bảo firebase_admin đã được khởi tạo
+        # Ensure firebase_admin is initialized
         db = get_firestore_client()
         
-        # Xác thực id_token do Google trả về
+        # Verify the id_token returned by Google
         decoded_token = admin_auth.verify_id_token(id_token)
         user_id = decoded_token['uid']
         email = decoded_token.get('email', '')
         
-        # Kiểm tra xem user đã có trong Firestore chưa, nếu chưa thì tạo mới
+        # Check if user exists in Firestore, if not, create a new profile
         user_doc = db.collection("users").document(user_id).get()
         if not user_doc.exists:
             user_data = {

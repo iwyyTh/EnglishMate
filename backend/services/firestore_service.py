@@ -4,6 +4,14 @@ import datetime
 from firebase_admin import firestore
 
 def save_message(msg: ChatMessage):
+    """Save a chat message to Firestore.
+
+    Args:
+        msg (ChatMessage): The message to save.
+
+    Returns:
+        bool: True if successful.
+    """
     db = get_firestore_client()
     timestamp = datetime.datetime.now().isoformat()
     
@@ -17,6 +25,15 @@ def save_message(msg: ChatMessage):
     return True
 
 def get_chat_history(user_id: str, limit: int = 8):
+    """Retrieve the most recent chat messages for a user.
+
+    Args:
+        user_id (str): The user's ID.
+        limit (int, optional): The maximum number of messages. Defaults to 8.
+
+    Returns:
+        list[dict]: A list of message dictionaries.
+    """
     db = get_firestore_client()
     
     q = (
