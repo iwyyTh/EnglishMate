@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#5DF8D8" # Màu chính (nút bấm, link, radio...)
+backgroundColor = "#093C5D" # Màu nền trang
+secondaryBackgroundColor = "#262730" # Màu nền sidebar, expander, card...
+textColor = "#fafafa" # Màu chữ
+font = "sans serif" # Font chữ: "sans serif", "serif", "monospace"

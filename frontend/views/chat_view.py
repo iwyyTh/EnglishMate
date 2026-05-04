@@ -14,18 +14,6 @@ def show_chat_page():
     Handles user interaction with the Gemini AI, saving messages to Firestore,
     and displaying the chat history in separate tabs.
     """
-    # --- HEADER ---
-    st.title("Dashboard")
-    st.write(f"Logged in as: {st.session_state.get('user_id', '')}")
-    
-    logout_btn = st.button("Logout")
-    if logout_btn:
-        st.session_state["logged_in"] = False
-        st.session_state["user_id"] = ""
-        st.rerun()
-
-    st.divider()
-    
     # --- TABS ---
     tab_chat, tab_history = st.tabs(["New Chat", "Chat History"])
     

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from backend.schemas.chat import ChatMessage
-from backend.services.firestore_service import save_message, get_chat_history
+from backend.services.firestore_service import save_message, get_chat_history, get_learning_activity
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -30,3 +30,16 @@ def api_get_history(user_id: str, limit: int = 8):
     """
     history = get_chat_history(user_id, limit)
     return {"history": history}
+
+@router.get("/activity/{user_id}")
+def api_get_activity(user_id: str):
+    """Retrieve daily learning activity for the heatmap.
+
+    Args:
+        user_id (str): The unique identifier of the user.
+
+    Returns:
+        dict: A dictionary mapping dates to activity counts.
+    """
+    activity = get_learning_activity(user_id)
+    return {"activity": activity}

@@ -46,3 +46,19 @@ def get_vocab_list(user_id: str):
         data["id"] = doc.id
         vocab_list.append(data)
     return vocab_list
+
+def update_vocab_status(user_id: str, word_id: str, status: str):
+    """Update the learning status of a vocabulary word.
+
+    Args:
+        user_id (str): The user's ID.
+        word_id (str): The vocabulary document ID.
+        status (str): New status ('learning', 'learned', or 'difficult').
+
+    Returns:
+        bool: True if the update was successful.
+    """
+    db = get_firestore_client()
+    doc_ref = db.collection("users").document(user_id).collection("vocabulary").document(word_id)
+    doc_ref.update({"status": status})
+    return True

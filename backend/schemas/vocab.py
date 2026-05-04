@@ -8,3 +8,9 @@ class VocabCreate(BaseModel):
     meaning: str
     example: Optional[str] = ""         
     status: Optional[str] = "learning"
+
+class VocabUpdateStatus(BaseModel):
+    """Schema for updating a vocabulary word's status."""
+    user_id: str
+    word_id: str
+    status: str  # "learning", "learned", or "difficult"

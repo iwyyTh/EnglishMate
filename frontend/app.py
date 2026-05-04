@@ -5,8 +5,9 @@ import streamlit as st
 from views.vocab_view import show_vocab_page
 from views.auth_view import show_auth_page
 from views.chat_view import show_chat_page
+from views.flashcard_view import show_flashcard_page
 
-st.set_page_config(page_title="EnglishMate")
+st.set_page_config(page_title="EnglishMate", layout="wide")
 
 import requests
 
@@ -48,17 +49,93 @@ handle_google_login_callback()
 
 # App Routing logic
 if st.session_state["logged_in"]:
-    # Sidebar navigation
+    user_id = st.session_state.get("user_id", "")
 
+    # --- Sidebar ---
     st.sidebar.title("EnglishMate")
-    page = st.sidebar.radio("Danh mục", ["AI sửa ngữ pháp", "Kho Từ Vựng"])
-    
-    # Page Switcher
+    st.sidebar.caption(f"ID: {user_id}")
+    st.sidebar.divider()
 
+    page = st.sidebar.radio("Danh mục", ["AI sửa ngữ pháp", "Kho Từ Vựng", "Flashcard"])
+
+    # Vocab stats in sidebar
+    st.sidebar.divider()
+    st.sidebar.markdown("**Thống kê từ vựng**")
+    try:
+        res = requests.get(f"http://127.0.0.1:8000/vocab/list/{user_id}")
+        if res.status_code == 200:
+            vocab = res.json().get("vocab_list", [])
+            learning = len([v for v in vocab if v.get("status") == "learning"])
+            learned = len([v for v in vocab if v.get("status") == "learned"])
+            difficult = len([v for v in vocab if v.get("status") == "difficult"])
+
+            col1, col2, col3 = st.sidebar.columns(3)
+            col1.metric("Đang học", learning)
+            col2.metric("Đã học", learned)
+            col3.metric("Từ khó", difficult)
+        else:
+            st.sidebar.write("Chưa có dữ liệu")
+    except Exception:
+        st.sidebar.write("Backend chưa khởi động")
+
+    # Activity heatmap in sidebar
+    st.sidebar.divider()
+    st.sidebar.markdown("**Hoạt động học tập (4 tuần)**")
+    try:
+        act_res = requests.get(f"http://127.0.0.1:8000/chat/activity/{user_id}")
+        if act_res.status_code == 200:
+            activity = act_res.json().get("activity", {})
+            dates = sorted(activity.keys())
+
+            # Build HTML grid (7 rows x 4 cols = 28 days)
+            squares = ""
+            for date_str in dates:
+                count = activity[date_str]
+                if count == 0:
+                    color = "#161b22"
+                elif count <= 2:
+                    color = "#0e4429"
+                elif count <= 5:
+                    color = "#006d32"
+                elif count <= 10:
+                    color = "#26a641"
+                else:
+                    color = "#39d353"
+
+                day_label = date_str[5:]  # MM-DD
+                squares += f'<div title="{day_label}: {count} hoạt động" style="width:14px;height:14px;background:{color};border-radius:2px;"></div>'
+
+            heatmap_html = f"""
+            <div style="display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; gap:3px; width:fit-content;">
+                {squares}
+            </div>
+            <div style="display:flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; color:#8b949e;">
+                <span>Ít</span>
+                <div style="width:10px;height:10px;background:#161b22;border-radius:2px;"></div>
+                <div style="width:10px;height:10px;background:#0e4429;border-radius:2px;"></div>
+                <div style="width:10px;height:10px;background:#006d32;border-radius:2px;"></div>
+                <div style="width:10px;height:10px;background:#26a641;border-radius:2px;"></div>
+                <div style="width:10px;height:10px;background:#39d353;border-radius:2px;"></div>
+                <span>Nhiều</span>
+            </div>
+            """
+            st.sidebar.markdown(heatmap_html, unsafe_allow_html=True)
+    except Exception:
+        pass
+
+    # Logout at the bottom
+    st.sidebar.divider()
+    if st.sidebar.button("Đăng xuất", use_container_width=True):
+        st.session_state["logged_in"] = False
+        st.session_state["user_id"] = ""
+        st.rerun()
+
+    # Page Switcher
     if page == "AI sửa ngữ pháp":
         show_chat_page()
     elif page == "Kho Từ Vựng":
         show_vocab_page()
+    elif page == "Flashcard":
+        show_flashcard_page()
 else:
     show_auth_page()
-
