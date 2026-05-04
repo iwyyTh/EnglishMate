@@ -88,4 +88,31 @@ def show_auth_page():
         # của bạn lúc nãy dán vào đây. 
         # MẸO: Nhớ bôi đen toàn bộ code cũ rồi ấn phím `Tab` một cái để thụt nó lùi vào trong khối `else:` nhé!
 
+        st.write("---")
+        try:
+            google_cfg = st.secrets["google-login"]
+            google_login_url = google_cfg.get("google-url", "")
+            if google_login_url:
+                st.markdown(
+                    f"""
+                    <a href="{google_login_url}" target="_self" style="
+                        display: inline-block;
+                        padding: 0.5em 1em;
+                        color: #000;
+                        background-color: #fff;
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        text-decoration: none;
+                        font-weight: bold;
+                        text-align: center;
+                        width: 100%;
+                    ">
+                        🌐 Đăng nhập với Google
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
+        except Exception:
+            st.info("💡 Chưa cấu hình Google Login. Vui lòng thêm vào `.streamlit/secrets.toml` để sử dụng tính năng này.")
+
     

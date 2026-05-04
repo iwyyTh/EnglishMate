@@ -32,9 +32,13 @@ def show_chat_page():
                 {"role": "assistant", "content": "Hello! I am your English Mate. Let's practice!"}
             ]
             
-        for msg in st.session_state["messages"]:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
+        # Dùng container để nhóm toàn bộ tin nhắn lại phía trên thanh chat
+        msg_container = st.container()
+        
+        with msg_container:
+            for msg in st.session_state["messages"]:
+                with st.chat_message(msg["role"]):
+                    st.markdown(msg["content"])
                 
         user_input = st.chat_input("Nhập tin nhắn bằng tiếng Anh...")
         if user_input:
@@ -44,8 +48,10 @@ def show_chat_page():
             st.session_state["messages"].append({"role": "user", "content": user_input})
             requests.post("http://127.0.0.1:8000/chat/save", json={"user_id": user_id, "role": "user", "content": user_input})
             
-            with st.chat_message("user"):
-                st.markdown(user_input)
+            # Hiển thị tin nhắn mới ngay trong container phía trên
+            with msg_container:
+                with st.chat_message("user"):
+                    st.markdown(user_input)
                 
             try:
                 # Gọi AI
@@ -57,8 +63,9 @@ def show_chat_page():
                 requests.post("http://127.0.0.1:8000/chat/save", json={"user_id": user_id, "role": "assistant", "content": bot_reply["content"]})
                 st.session_state["messages"].append(bot_reply)
                 
-                with st.chat_message("assistant"):
-                    st.markdown(bot_reply["content"])
+                with msg_container:
+                    with st.chat_message("assistant"):
+                        st.markdown(bot_reply["content"])
                     
             except Exception as e:
                 st.error("Thầy giáo AI đang bận uống nước (Quá tải)! Bạn vui lòng đợi khoảng 10 giây rồi thử lại.")
