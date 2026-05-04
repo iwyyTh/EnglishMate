@@ -34,7 +34,7 @@ def show_chat_page():
         # Initialize default greeting without loading full history
         if "messages" not in st.session_state:
             st.session_state["messages"] = [
-                {"role": "assistant", "content": "Hello! I am your English Mate. Let's practice!"}
+                {"role": "assistant", "content": "Hello! I am your English Mate. I will help you correct your English grammar!"}
             ]
             
         # Use a container to group messages above the chat input
