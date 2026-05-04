@@ -1,3 +1,10 @@
+# Demo
+
+
+https://github.com/user-attachments/assets/53ac8c0d-48b5-45ca-9ec6-dd9fb9bb72d6
+
+
+
 # EnglishMate
 
 EnglishMate là ứng dụng trợ lý học tiếng Anh thông minh. Sử dụng AI (Google Gemini) để sửa ngữ pháp, tra từ tự động và quản lý kho từ vựng cá nhân.
