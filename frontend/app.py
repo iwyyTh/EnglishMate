@@ -78,48 +78,50 @@ if st.session_state["logged_in"]:
     except Exception:
         st.sidebar.write("Backend chưa khởi động")
 
-    # Activity heatmap in sidebar
+    # Learning streak in sidebar
     st.sidebar.divider()
-    st.sidebar.markdown("**Hoạt động học tập (4 tuần)**")
+    st.sidebar.markdown("**Chuỗi ngày học tập**")
     try:
         act_res = requests.get(f"http://127.0.0.1:8000/chat/activity/{user_id}")
         if act_res.status_code == 200:
             activity = act_res.json().get("activity", {})
-            dates = sorted(activity.keys())
+            dates = sorted(activity.keys(), reverse=True)
 
-            # Build HTML grid (7 rows x 4 cols = 28 days)
-            squares = ""
+            # Calculate streak (consecutive days with activity > 0)
+            streak = 0
             for date_str in dates:
-                count = activity[date_str]
-                if count == 0:
-                    color = "#161b22"
-                elif count <= 2:
-                    color = "#0e4429"
-                elif count <= 5:
-                    color = "#006d32"
-                elif count <= 10:
-                    color = "#26a641"
+                if activity[date_str] > 0:
+                    streak += 1
                 else:
-                    color = "#39d353"
+                    break
 
-                day_label = date_str[5:]  # MM-DD
-                squares += f'<div title="{day_label}: {count} hoạt động" style="width:14px;height:14px;background:{color};border-radius:2px;"></div>'
+            today_count = activity.get(dates[0], 0) if dates else 0
 
-            heatmap_html = f"""
-            <div style="display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; gap:3px; width:fit-content;">
-                {squares}
-            </div>
-            <div style="display:flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; color:#8b949e;">
-                <span>Ít</span>
-                <div style="width:10px;height:10px;background:#161b22;border-radius:2px;"></div>
-                <div style="width:10px;height:10px;background:#0e4429;border-radius:2px;"></div>
-                <div style="width:10px;height:10px;background:#006d32;border-radius:2px;"></div>
-                <div style="width:10px;height:10px;background:#26a641;border-radius:2px;"></div>
-                <div style="width:10px;height:10px;background:#39d353;border-radius:2px;"></div>
-                <span>Nhiều</span>
-            </div>
-            """
-            st.sidebar.markdown(heatmap_html, unsafe_allow_html=True)
+            # Streak display
+            if streak >= 7:
+                fire = "🔥🔥🔥"
+                msg = "Tuyệt vời! Giữ vững phong độ!"
+            elif streak >= 3:
+                fire = "🔥🔥"
+                msg = "Rất tốt! Cố lên nào!"
+            elif streak >= 1:
+                fire = "🔥"
+                msg = "Khởi đầu tốt lắm!"
+            else:
+                fire = "❄️"
+                msg = "Hãy bắt đầu học hôm nay!"
+
+            st.sidebar.markdown(
+                f"""
+                <div style="text-align:center; padding:12px 0;">
+                    <div style="font-size:2.5rem;">{fire}</div>
+                    <div style="font-size:2rem; font-weight:bold; color:#fafafa;">{streak} ngày</div>
+                    <div style="font-size:0.85rem; color:#8b949e; margin-top:4px;">{msg}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.sidebar.caption(f"Hôm nay: {today_count} hoạt động")
     except Exception:
         pass
 

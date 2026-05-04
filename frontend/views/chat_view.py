@@ -15,7 +15,7 @@ def show_chat_page():
     and displaying the chat history in separate tabs.
     """
     # --- TABS ---
-    tab_chat, tab_history = st.tabs(["New Chat", "Chat History"])
+    tab_chat, tab_save_word, tab_history = st.tabs(["New Chat", "Lưu từ nhanh", "Chat History"])
     
     # === TAB 1: CURRENT CHAT ===
     with tab_chat:
@@ -63,7 +63,81 @@ def show_chat_page():
             except Exception as e:
                 st.error("The AI teacher is busy right now! Please wait 10 seconds and try again.")
 
-    # === TAB 2: CHAT HISTORY ===
+    # === TAB 2: QUICK SAVE WORD ===
+    with tab_save_word:
+        st.subheader("Lưu từ vựng nhanh")
+        st.caption("Gõ từ tiếng Anh bạn muốn lưu, AI sẽ tự động tra nghĩa cho bạn.")
+
+        word_input = st.text_input("Nhập từ tiếng Anh:", key="quick_word_input")
+
+        if st.button("Tra nghĩa", key="lookup_btn"):
+            if word_input.strip():
+                with st.spinner("Đang tra từ..."):
+                    try:
+                        lookup_prompt = (
+                            f"Hãy cho tôi nghĩa tiếng Việt ngắn gọn (tối đa 10 từ) và "
+                            f"1 câu ví dụ tiếng Anh đơn giản cho từ '{word_input.strip()}'. "
+                            f"Trả lời theo đúng format sau, không thêm gì khác:\n"
+                            f"Nghĩa: <nghĩa tiếng Việt>\n"
+                            f"Ví dụ: <câu ví dụ tiếng Anh>"
+                        )
+                        result = model.generate_content(lookup_prompt)
+                        reply = result.text.strip()
+
+                        # Parse response
+                        meaning = ""
+                        example = ""
+                        for line in reply.split("\n"):
+                            line = line.strip()
+                            if line.lower().startswith("nghĩa:"):
+                                meaning = line.split(":", 1)[1].strip()
+                            elif line.lower().startswith("ví dụ:"):
+                                example = line.split(":", 1)[1].strip()
+
+                        st.session_state["lookup_word"] = word_input.strip()
+                        st.session_state["lookup_meaning"] = meaning
+                        st.session_state["lookup_example"] = example
+                    except Exception:
+                        st.error("Không thể tra từ lúc này. Vui lòng thử lại.")
+            else:
+                st.warning("Vui lòng nhập một từ tiếng Anh.")
+
+        # Show lookup result and save button
+        if st.session_state.get("lookup_word"):
+            st.divider()
+            st.markdown(f"**Từ:** {st.session_state['lookup_word']}")
+            
+            meaning_edit = st.text_input(
+                "Nghĩa:", 
+                value=st.session_state.get("lookup_meaning", ""),
+                key="meaning_edit",
+            )
+            example_edit = st.text_input(
+                "Ví dụ:", 
+                value=st.session_state.get("lookup_example", ""),
+                key="example_edit",
+            )
+
+            if st.button("Lưu vào Kho Từ Vựng", type="primary", key="save_word_btn"):
+                user_id = st.session_state["user_id"]
+                payload = {
+                    "user_id": user_id,
+                    "word": st.session_state["lookup_word"],
+                    "meaning": meaning_edit,
+                    "example": example_edit,
+                    "status": "learning",
+                }
+                res = requests.post("http://127.0.0.1:8000/vocab/add", json=payload)
+                if res.status_code == 200:
+                    st.success(f"Đã lưu '{st.session_state['lookup_word']}' vào kho từ vựng!")
+                    # Clear lookup state
+                    del st.session_state["lookup_word"]
+                    del st.session_state["lookup_meaning"]
+                    del st.session_state["lookup_example"]
+                else:
+                    st.error("Không thể lưu từ. Vui lòng thử lại.")
+
+    # === TAB 3: CHAT HISTORY ===
     with tab_history:
         st.subheader("Firestore Chat Archive")
         if st.button("Load Chat History"):
